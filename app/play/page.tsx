@@ -13,8 +13,7 @@ export default function PlayPage() {
   const [questionStartTime, setQuestionStartTime] = useState<number>(0);
   const [isFinished, setIsFinished] = useState(false);
 
-  // ৭টি প্রশ্নের সেট
-  const questionsList = QUIZ_QUESTIONS.slice(0, 7);
+  const questionsList = QUIZ_QUESTIONS;
   const currentQuestion = questionsList[currentIndex];
 
   const handleStartGame = (e: React.FormEvent) => {
@@ -46,7 +45,6 @@ export default function PlayPage() {
         setSelectedOption(null);
         setQuestionStartTime(Date.now());
       } else {
-        // ৭টি প্রশ্ন শেষ হলে ব্যাকএন্ডে ড্যাশবোর্ডের জন্য ফাইনাল ডাটা পাঠানো হবে
         const totalDuration = Number(((Date.now() - quizStartTime) / 1000).toFixed(2));
         setIsFinished(true);
 
@@ -61,7 +59,7 @@ export default function PlayPage() {
           }),
         }).catch((e) => console.error("Submit API Error:", e));
       }
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -70,7 +68,7 @@ export default function PlayPage() {
         <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-center space-y-6">
           <div>
             <h1 className="text-3xl font-extrabold text-amber-400">JP-BD Quiz 🇧🇩🇯🇵</h1>
-            <p className="text-sm text-slate-400 mt-1">Enter your name to start 7-question round</p>
+            <p className="text-sm text-slate-400 mt-1">Enter your name to play</p>
           </div>
 
           <form onSubmit={handleStartGame} className="space-y-4">
@@ -84,7 +82,7 @@ export default function PlayPage() {
             />
             <button
               type="submit"
-              className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition active:scale-95"
+              className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition active:scale-95"
             >
               Start Quiz 🚀
             </button>
@@ -95,7 +93,7 @@ export default function PlayPage() {
           <div className="text-5xl">🎉</div>
           <h1 className="text-2xl font-bold text-emerald-400">Quiz Completed!</h1>
           <p className="text-slate-300 text-sm">
-            Awesome job, <span className="text-amber-400 font-bold">{playerName}</span>!
+            Great job, <span className="text-amber-400 font-bold">{playerName}</span>!
           </p>
           <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
             <p className="text-xs text-slate-400">Total Score</p>
@@ -104,7 +102,8 @@ export default function PlayPage() {
           <p className="text-xs text-slate-500">Check the Presenter Dashboard on laptop for rankings.</p>
         </div>
       ) : (
-        <div className="w-full max-w-md flex flex-col justify-between min-h-[85vh]">
+        <div className="w-full max-w-md flex flex-col justify-between min-h-[90vh]">
+          {/* Header */}
           <div className="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
               <p className="text-xs text-slate-400">Player</p>
@@ -116,20 +115,14 @@ export default function PlayPage() {
             </div>
           </div>
 
-          <div className="my-4 text-center space-y-3">
-            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-lg">
-              <img
-                src={currentQuestion.image}
-                alt="Question Visual"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <h2 className="text-lg font-bold text-white">{currentQuestion.question_en}</h2>
+          {/* Question Text */}
+          <div className="my-4 text-center space-y-1">
+            <h2 className="text-xl font-extrabold text-white">{currentQuestion.question_en}</h2>
             <p className="text-amber-300 text-sm font-medium">{currentQuestion.question_jp}</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 my-auto">
+          {/* 2x2 Image Options Grid */}
+          <div className="grid grid-cols-2 gap-3 my-auto">
             {currentQuestion.options.map((option) => {
               const isSelected = selectedOption === option.id;
               return (
@@ -138,30 +131,38 @@ export default function PlayPage() {
                   type="button"
                   onClick={() => handleOptionSelect(option.id)}
                   disabled={selectedOption !== null}
-                  className={`p-4 rounded-xl border flex items-center justify-between font-bold text-sm transition ${
+                  className={`group relative overflow-hidden rounded-2xl border-2 transition flex flex-col items-center text-center p-2 ${
                     isSelected
                       ? option.id === currentQuestion.correctOptionId
-                        ? "bg-emerald-500 text-slate-950 border-emerald-400 scale-95"
-                        : "bg-rose-500 text-white border-rose-400 scale-95"
+                        ? "border-emerald-400 bg-emerald-500/20 scale-95"
+                        : "border-rose-500 bg-rose-500/20 scale-95"
                       : selectedOption !== null
-                      ? "bg-slate-900 border-slate-800 text-slate-600 opacity-40"
-                      : "bg-slate-900 border-slate-800 text-slate-200 active:bg-slate-800"
+                      ? "border-slate-800 bg-slate-900 opacity-40"
+                      : "border-slate-800 bg-slate-900 active:scale-95 hover:border-amber-400"
                   }`}
                 >
-                  <span className="text-xs opacity-70">Option {option.id}</span>
-                  <span>{option.text}</span>
+                  <div className="w-full h-28 rounded-xl overflow-hidden mb-2 bg-slate-950">
+                    <img
+                      src={option.image}
+                      alt={option.text}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
+                  </div>
+                  <span className="text-xs text-amber-400 font-bold mb-0.5">Option {option.id}</span>
+                  <span className="text-sm font-bold text-slate-100">{option.text}</span>
                 </button>
               );
             })}
           </div>
 
+          {/* Footer Status */}
           <div className="text-center pt-2">
             {selectedOption ? (
               <p className="text-xs text-emerald-400 font-semibold animate-pulse">
-                ✓ Recorded! Moving to next question...
+                ✓ Answer Recorded!
               </p>
             ) : (
-              <p className="text-xs text-slate-500">Tap an option to select</p>
+              <p className="text-xs text-slate-500">Tap an image option to select</p>
             )}
           </div>
         </div>
