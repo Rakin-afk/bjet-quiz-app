@@ -9,13 +9,14 @@ export default function PlayPage() {
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
+  const [totalTimeTaken, setTotalTimeTaken] = useState<number>(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(15);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const currentQuestion: Question = QUIZ_QUESTIONS[currentQuestionIndex];
 
-  // টাইমার লজিক (নাম সাবমিট করার পর শুরু হবে)
+  // টাইমার লজিক
   useEffect(() => {
     if (!hasEnteredName || isGameOver) return;
 
@@ -26,12 +27,13 @@ export default function PlayPage() {
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => prev - 1);
+      setTotalTimeTaken((prev) => prev + 1); // মোট কত সেকেন্ড সময় নিয়েছে তা ট্র্যাক করছে
     }, 1000);
 
     return () => clearInterval(timer);
   }, [timeRemaining, isGameOver, hasEnteredName]);
 
-  // নাম সাবমিট হ্যান্ডলার
+  // নাম সাবমিট
   const handleStartGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (playerName.trim() !== "") {
@@ -39,12 +41,11 @@ export default function PlayPage() {
     }
   };
 
-  // উত্তর সিলেক্ট করার লজিক (Score Calculation Fix)
+  // অপশন সিলেক্ট
   const handleOptionSelect = (optionId: string) => {
     if (selectedOption !== null) return;
     setSelectedOption(optionId);
 
-    // সঠিক উত্তর হলে পয়েন্ট পাবে, ভুল হলে ০
     if (optionId === currentQuestion.correctOptionId) {
       const pointsGained = 100 + timeRemaining * 10;
       setScore((prevScore) => prevScore + pointsGained);
@@ -55,7 +56,7 @@ export default function PlayPage() {
     }, 1000);
   };
 
-  // পরের প্রশ্ন বা গেম শেষ
+  // পরবর্তী প্রশ্ন বা গেম শেষ এবং লিডারবোর্ডে স্কোর পাঠানো
   const handleNextQuestion = () => {
     setSelectedOption(null);
     setTimeRemaining(15);
@@ -64,10 +65,28 @@ export default function PlayPage() {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       setIsGameOver(true);
+      submitScoreToLeaderboard(score, totalTimeTaken);
     }
   };
 
-  // ১. স্ক্রিন: নাম নেওয়ার ফর্ম
+  // লিডারবোর্ড API তে ডাটা পাঠানোর ফাংশন
+  const submitScoreToLeaderboard = async (finalScore: number, timeTaken: number) => {
+    try {
+      await fetch("/api/leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          player: playerName,
+          score: finalScore,
+          timeTaken: `${timeTaken}s`,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to submit leaderboard score:", error);
+    }
+  };
+
+  // ১. নাম নেওয়ার স্ক্রিন
   if (!hasEnteredName) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
@@ -96,7 +115,7 @@ export default function PlayPage() {
     );
   }
 
-  // ২. স্ক্রিন: গেম ওভার
+  // ২. গেম ওভার স্ক্রিন
   if (isGameOver) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
@@ -116,10 +135,9 @@ export default function PlayPage() {
     );
   }
 
-  // ৩. স্ক্রিন: কুইজ প্লে স্ক্রিন
+  // ৩. মূল গেম স্ক্রিন
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-between p-4 md:p-8">
-      {/* Top Bar */}
       <div className="w-full max-w-2xl flex justify-between items-center border-b border-slate-800 pb-4">
         <div>
           <span className="text-xs text-gray-400 uppercase tracking-wider block">Player</span>
@@ -139,13 +157,11 @@ export default function PlayPage() {
         </div>
       </div>
 
-      {/* Question Heading */}
       <div className="w-full max-w-2xl my-6 text-center">
         <h2 className="text-2xl md:text-3xl font-bold mb-2">{currentQuestion.question_en}</h2>
         <p className="text-lg text-gray-400">{currentQuestion.question_jp}</p>
       </div>
 
-      {/* Options Grid */}
       <div className="w-full max-w-2xl grid grid-cols-2 gap-4 my-auto">
         {currentQuestion.options.map((option) => {
           const isSelected = selectedOption === option.id;
