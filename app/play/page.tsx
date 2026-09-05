@@ -1,92 +1,100 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { QUIZ_QUESTIONS, Question } from "@/data/questions";
 
 export default function PlayPage() {
   const [playerName, setPlayerName] = useState<string>("");
   const [hasEnteredName, setHasEnteredName] = useState<boolean>(false);
-  
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
-  const [totalTimeTaken, setTotalTimeTaken] = useState<number>(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(15);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
+  // নিখুঁত সময় ট্র্যাকিংয়ের জন্য Refs
+  const startTimeRef = useRef<number>(0);
+  const currentScoreRef = useRef<number>(0);
+
   const currentQuestion: Question = QUIZ_QUESTIONS[currentQuestionIndex];
 
-  // টাইমার লজিক
+  // টাইমার কাউন্টডাউন (প্রতি প্রশ্নের জন্য ১৫ সেকেন্ড)
   useEffect(() => {
     if (!hasEnteredName || isGameOver) return;
 
     if (timeRemaining === 0) {
-      handleNextQuestion();
+      handleOptionSelect(""); // সময় শেষ হলে খালি উত্তর হিসেবে সাবমিট হবে
       return;
     }
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => prev - 1);
-      setTotalTimeTaken((prev) => prev + 1); // মোট কত সেকেন্ড সময় নিয়েছে তা ট্র্যাক করছে
     }, 1000);
 
     return () => clearInterval(timer);
   }, [timeRemaining, isGameOver, hasEnteredName]);
 
-  // নাম সাবমিট
+  // নাম সাবমিট ও গেম টাইম স্টার্ট
   const handleStartGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (playerName.trim() !== "") {
       setHasEnteredName(true);
+      startTimeRef.current = Date.now(); // এক্সেক্ট স্টার্ট টাইম রেকর্ড করা হলো
     }
   };
 
-  // অপশন সিলেক্ট
+  // উত্তর সিলেক্ট এবং নিখুঁত পয়েন্ট হিসেব
   const handleOptionSelect = (optionId: string) => {
-    if (selectedOption !== null) return;
+    if (selectedOption !== null && optionId !== "") return;
     setSelectedOption(optionId);
 
+    let updatedScore = currentScoreRef.current;
+
+    // সঠিক উত্তর হলে পয়েন্ট যোগ হবে
     if (optionId === currentQuestion.correctOptionId) {
       const pointsGained = 100 + timeRemaining * 10;
-      setScore((prevScore) => prevScore + pointsGained);
+      updatedScore += pointsGained;
+      currentScoreRef.current = updatedScore;
+      setScore(updatedScore);
     }
 
     setTimeout(() => {
-      handleNextQuestion();
+      handleNextQuestion(updatedScore);
     }, 1000);
   };
 
-  // পরবর্তী প্রশ্ন বা গেম শেষ এবং লিডারবোর্ডে স্কোর পাঠানো
-  const handleNextQuestion = () => {
+  // পরবর্তী প্রশ্ন বা গেম ওভার এবং API-তে ১০০% এক্সেক্ট ডাটা সেন্ড
+  const handleNextQuestion = async (finalScore: number) => {
     setSelectedOption(null);
-    setTimeRemaining(15);
 
     if (currentQuestionIndex + 1 < QUIZ_QUESTIONS.length) {
       setCurrentQuestionIndex((prev) => prev + 1);
+      setTimeRemaining(15);
     } else {
       setIsGameOver(true);
-      submitScoreToLeaderboard(score, totalTimeTaken);
+
+      // ১. এক্সেক্ট মোট কত সেকেন্ড সময় লেগেছে তা বের করা
+      const totalSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+
+      // ২. ফোনে দেখা পাওয়া ফাইনাল নম্বর ও নিখুঁত সময় API-তে পাঠানো
+      try {
+        await fetch("/api/leaderboard", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            player: playerName,
+            score: finalScore, // ফোনের এক্সেক্ট স্কোর
+            timeTaken: `${totalSeconds}s`, // আসল সময়
+          }),
+        });
+      } catch (err) {
+        console.error("Leaderboard submit error:", err);
+      }
     }
   };
 
-  // লিডারবোর্ড API তে ডাটা পাঠানোর ফাংশন
-  const submitScoreToLeaderboard = async (finalScore: number, timeTaken: number) => {
-    try {
-      await fetch("/api/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          player: playerName,
-          score: finalScore,
-          timeTaken: `${timeTaken}s`,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to submit leaderboard score:", error);
-    }
-  };
-
-  // ১. নাম নেওয়ার স্ক্রিন
+  // ১. নাম ইনপুট স্ক্রিন
   if (!hasEnteredName) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">

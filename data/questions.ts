@@ -18,10 +18,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "Which flag belongs to Japan?",
     question_jp: "日本の国旗はどれですか？",
     options: [
-      { id: "A", text: "Japan", image: "https://flagcdn.com/w320/jp.png" },
-      { id: "B", text: "Bangladesh", image: "https://flagcdn.com/w320/bd.png" },
-      { id: "C", text: "China", image: "https://flagcdn.com/w320/cn.png" },
-      { id: "D", text: "USA", image: "https://flagcdn.com/w320/us.png" }
+      { id: "A", image: "https://flagcdn.com/w320/jp.png" },
+      { id: "B", image: "https://flagcdn.com/w320/bd.png" },
+      { id: "C", image: "https://flagcdn.com/w320/cn.png" },
+      { id: "D", image: "https://flagcdn.com/w320/us.png" }
     ],
     correctOptionId: "A"
   },
@@ -54,10 +54,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "Which flag belongs to Bangladesh?",
     question_jp: "バングラデシュの国旗はどれですか？",
     options: [
-      { id: "A", text: "Japan", image: "https://flagcdn.com/w320/jp.png" },
-      { id: "B", text: "Bangladesh", image: "https://flagcdn.com/w320/bd.png" },
-      { id: "C", text: "Ukraine", image: "https://flagcdn.com/w320/ua.png" },
-      { id: "D", text: "Canada", image: "https://flagcdn.com/w320/ca.png" }
+      { id: "A", image: "https://flagcdn.com/w320/jp.png" },
+      { id: "B", image: "https://flagcdn.com/w320/bd.png" },
+      { id: "C", image: "https://flagcdn.com/w320/ua.png" },
+      { id: "D", image: "https://flagcdn.com/w320/ca.png" }
     ],
     correctOptionId: "B"
   },
@@ -78,10 +78,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "BJET is mainly for...",
     question_jp: "BJETは主に誰のためのプログラムですか？",
     options: [
-      { id: "A", text: "Pilot ✈️", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDQebbaltAsJAPGLCuJ5LHAIcF4haAm3ucBIkCzns7RM6hUV6-d1JEmPQ&s=10" },
-      { id: "B", text: "Doctor 🩺", image: "https://hips.hearstapps.com/hmg-prod/images/portrait-of-a-happy-young-doctor-in-his-clinic-royalty-free-image-1661432441.jpg?crop=0.66698xw:1xh;center,top&resize=1200:*" },
-      { id: "C", text: "IT Engineer 💻", image: "https://www.gisma.com/uploads/sites/5/2024/12/pexels-thisisengineering-3861958-scaled.jpg?w=1024" },
-      { id: "D", text: "Farmer 🌾", image: "https://images.stockcake.com/public/f/b/b/fbb1eb1e-5fdb-4bd8-b109-33e48c06add3_large/farmer-working-field-stockcake.jpg" }
+      { id: "A", text: "Pilot", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDQebbaltAsJAPGLCuJ5LHAIcF4haAm3ucBIkCzns7RM6hUV6-d1JEmPQ&s=10" },
+      { id: "B", text: "Doctor", image: "https://hips.hearstapps.com/hmg-prod/images/portrait-of-a-happy-young-doctor-in-his-clinic-royalty-free-image-1661432441.jpg?crop=0.66698xw:1xh;center,top&resize=1200:*" },
+      { id: "C", text: "IT Engineer", image: "https://www.gisma.com/uploads/sites/5/2024/12/pexels-thisisengineering-3861958-scaled.jpg?w=1024" },
+      { id: "D", text: "Farmer", image: "https://images.stockcake.com/public/f/b/b/fbb1eb1e-5fdb-4bd8-b109-33e48c06add3_large/farmer-working-field-stockcake.jpg" }
     ],
     correctOptionId: "C"
   },
@@ -90,10 +90,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "Bangladesh is located in...",
     question_jp: "バングラデシュはどこに位置していますか？",
     options: [
-      { id: "A", text: "Europe 🌍", image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&q=80" },
-      { id: "B", text: "North America 🌎", image: "https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=400&q=80" },
-      { id: "C", text: "Africa 🌍", image: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=400&q=80" },
-      { id: "D", text: "Asia 🌏", image: "https://images.unsplash.com/photo-1535139262971-c51845709a48?w=400&q=80" }
+      { id: "A", text: "Europe", image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=400&q=80" },
+      { id: "B", text: "North America", image: "https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=400&q=80" },
+      { id: "C", text: "Africa", image: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=400&q=80" },
+      { id: "D", text: "Asia", image: "https://images.unsplash.com/photo-1535139262971-c51845709a48?w=400&q=80" }
     ],
     correctOptionId: "D"
   }
