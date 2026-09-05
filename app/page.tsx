@@ -1,109 +1,101 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
-interface Player {
-  name: string;
+interface LeaderboardEntry {
+  player: string;
   score: number;
-  timeTaken: number;
+  timeTaken: string;
 }
 
-export default function HostDashboard() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  
-  // ১. এখানে 'http://192.168.0.41:3000/play' সরিয়ে তোমার Vercel এর আসল লিংক বসাও
-  // উদাহরণ: https://bjet-quiz-app.vercel.app/play
-  const [playUrl, setPlayUrl] = useState("");
+export default function Home() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const playUrl = "https://bjet-quiz-app.vercel.app/play";
 
+  // প্রতি ১ সেকেন্ড পর পর অটো ফেচ হবে
   useEffect(() => {
-    // এটি স্বয়ংক্রিয়ভাবে Vercel এর ডোমেইন ধরে নেবে
-    if (typeof window !== "undefined") {
-      setPlayUrl(`${window.location.origin}/play`);
-    }
-
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch("/api/quiz");
-        const data = await res.json();
-        if (data.players) {
-          setPlayers(data.players);
+        const res = await fetch("/api/leaderboard");
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderboard(data);
         }
-      } catch (e) {
-        console.error("Failed to fetch live leaderboard", e);
+      } catch (err) {
+        console.error("Error fetching leaderboard:", err);
       }
     };
 
     fetchLeaderboard();
-    const timer = setInterval(fetchLeaderboard, 1000);
-    return () => clearInterval(timer);
+    const interval = setInterval(fetchLeaderboard, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const qrImageUrl = playUrl 
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(playUrl)}`
-    : "";
-
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div className="flex justify-between items-center border-b border-slate-800 pb-6">
-          <div>
-            <h1 className="text-3xl font-black text-amber-400">Live Presenter Dashboard 🎮</h1>
-            <p className="text-slate-400 text-sm">Scan QR Code on mobile to play live</p>
+    <main className="min-h-screen bg-slate-950 text-white p-6 md:p-10 flex flex-col justify-between">
+      {/* Top Header */}
+      <div className="flex justify-between items-center border-b border-slate-800 pb-6 mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-yellow-400">
+            Live Presenter Dashboard 🎮
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Scan QR Code on mobile to play live</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl px-6 py-3 text-center">
+          <span className="text-xs text-gray-400 block uppercase font-semibold">Connected Players</span>
+          <span className="text-2xl font-bold text-yellow-400">{leaderboard.length}</span>
+        </div>
+      </div>
+
+      {/* Main Grid Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-auto">
+        {/* Left: QR Code Box */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl">
+          <div className="bg-white p-4 rounded-2xl mb-6 shadow-inner">
+            <QRCodeSVG value={playUrl} size={220} />
           </div>
-          <div className="bg-slate-900 border border-slate-800 px-5 py-2.5 rounded-xl text-center">
-            <span className="text-xs text-slate-400 block">Connected Players</span>
-            <span className="text-2xl font-bold text-amber-400">{players.length}</span>
+          <div className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 w-full text-xs font-mono text-gray-300 break-all">
+            {playUrl}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-            <div className="bg-white p-3 rounded-2xl border-4 border-amber-400 mb-4 min-h-[200px] flex items-center justify-center">
-              {qrImageUrl ? (
-                <img src={qrImageUrl} alt="QR Code" width={180} height={180} className="rounded-lg" />
-              ) : (
-                <p className="text-xs text-slate-500">Generating QR...</p>
-              )}
+        {/* Right: Live Leaderboard Box */}
+        <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col">
+          <h2 className="text-xl font-bold mb-6 text-yellow-400 flex items-center gap-2">
+            🏆 Live Leaderboard & Timing
+          </h2>
+
+          {leaderboard.length === 0 ? (
+            <div className="my-auto text-center text-gray-500 py-12">
+              Waiting for players to scan QR and join...
             </div>
-            <p className="text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 break-all max-w-full">
-              {playUrl || "Loading URL..."}
-            </p>
-          </div>
-
-          <div className="md:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-            <h2 className="text-xl font-bold text-slate-200 mb-4 flex items-center gap-2">
-              🏆 Live Leaderboard & Timing
-            </h2>
-
-            {players.length === 0 ? (
-              <div className="text-center py-16 text-slate-500 text-sm">
-                Waiting for players to scan QR and join...
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-xs uppercase text-slate-400">
-                      <th className="py-3 px-2">Rank</th>
-                      <th className="py-3 px-2">Player</th>
-                      <th className="py-3 px-2">Time Taken</th>
-                      <th className="py-3 px-2 text-right">Points</th>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 text-gray-400 text-xs uppercase">
+                    <th className="pb-3 px-4">Rank</th>
+                    <th className="pb-3 px-4">Player</th>
+                    <th className="pb-3 px-4 text-center">Time</th>
+                    <th className="pb-3 px-4 text-right">Score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {leaderboard.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/50 transition">
+                      <td className="py-4 px-4 font-bold text-yellow-400">#{idx + 1}</td>
+                      <td className="py-4 px-4 font-semibold text-white">{item.player}</td>
+                      <td className="py-4 px-4 text-center text-gray-400 font-mono">{item.timeTaken}</td>
+                      <td className="py-4 px-4 text-right font-bold text-green-400 text-lg">
+                        {item.score} pts
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/50">
-                    {players.map((p, index) => (
-                      <tr key={p.name} className="hover:bg-slate-800/30 transition">
-                        <td className="py-3 px-2 font-bold text-amber-400">#{index + 1}</td>
-                        <td className="py-3 px-2 font-semibold text-slate-100">{p.name}</td>
-                        <td className="py-3 px-2 text-xs font-mono text-slate-400">{p.timeTaken}s</td>
-                        <td className="py-3 px-2 text-right font-black text-emerald-400">{p.score} pts</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </main>
