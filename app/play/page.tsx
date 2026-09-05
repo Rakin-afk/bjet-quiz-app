@@ -1,172 +1,150 @@
 "use client";
 
-import React, { useState } from "react";
-import { QUIZ_QUESTIONS } from "@/data/questions";
+import { useState, useEffect } from "react";
+import { QUIZ_QUESTIONS, Question } from "@/data/questions";
 
 export default function PlayPage() {
-  const [playerName, setPlayerName] = useState("");
-  const [isJoined, setIsJoined] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [score, setScore] = useState<number>(0);
+  const [timeRemaining, setTimeRemaining] = useState<number>(15);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [totalScore, setTotalScore] = useState(0);
-  const [quizStartTime, setQuizStartTime] = useState<number>(0);
-  const [questionStartTime, setQuestionStartTime] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState(false);
 
-  const questionsList = QUIZ_QUESTIONS;
-  const currentQuestion = questionsList[currentIndex];
+  const currentQuestion: Question = QUIZ_QUESTIONS[currentQuestionIndex];
 
-  const handleStartGame = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = playerName.trim();
-    if (!trimmed) return;
+  // টাইমার লজিক (প্রতি সেকেন্ডে কমবে)
+  useEffect(() => {
+    if (isGameOver) return;
 
-    const now = Date.now();
-    setIsJoined(true);
-    setQuizStartTime(now);
-    setQuestionStartTime(now);
-  };
+    if (timeRemaining === 0) {
+      handleNextQuestion();
+      return;
+    }
 
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeRemaining, isGameOver]);
+
+  // উত্তর সিলেক্ট করার লজিক (Score Calculation Fix)
   const handleOptionSelect = (optionId: string) => {
-    if (selectedOption) return;
-
+    if (selectedOption !== null) return; // একবার সিলেক্ট করলে দ্বিতীয়বার সিলেক্ট করা যাবে না
     setSelectedOption(optionId);
-    const now = Date.now();
-    const qTimeTaken = (now - questionStartTime) / 1000;
-    const isCorrect = optionId === currentQuestion.correctOptionId;
-    const points = isCorrect ? Math.max(100 - Math.floor(qTimeTaken * 2), 10) : 0;
 
-    const updatedScore = totalScore + points;
-    setTotalScore(updatedScore);
+    // ১. চেক করা হবে উত্তর সঠিক কি না
+    if (optionId === currentQuestion.correctOptionId) {
+      // সঠিক হলে: Base 100 + অবশিষ্ট সময়ের বোনাস পয়েন্ট
+      const pointsGained = 100 + timeRemaining * 10;
+      setScore((prevScore) => prevScore + pointsGained);
+    } else {
+      // ভুল হলে: ০ পয়েন্ট যোগ হবে
+      console.log("Wrong answer! 0 points awarded.");
+    }
 
+    // ১ সেকেন্ড পর পরবর্তী প্রশ্নে যাবে
     setTimeout(() => {
-      if (currentIndex + 1 < questionsList.length) {
-        setCurrentIndex((prev) => prev + 1);
-        setSelectedOption(null);
-        setQuestionStartTime(Date.now());
-      } else {
-        const totalDuration = Number(((Date.now() - quizStartTime) / 1000).toFixed(2));
-        setIsFinished(true);
-
-        fetch("/api/quiz", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "submit",
-            name: playerName.trim(),
-            score: updatedScore,
-            timeTaken: totalDuration,
-          }),
-        }).catch((e) => console.error("Submit API Error:", e));
-      }
+      handleNextQuestion();
     }, 1000);
   };
 
+  // পরবর্তী প্রশ্ন বা গেম শেষ করার লজিক
+  const handleNextQuestion = () => {
+    setSelectedOption(null);
+    setTimeRemaining(15); // পরের প্রশ্নের জন্য আবার ১৫ সেকেন্ড সেট হবে
+
+    if (currentQuestionIndex + 1 < QUIZ_QUESTIONS.length) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      setIsGameOver(true);
+    }
+  };
+
+  if (isGameOver) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 max-w-md w-full text-center shadow-xl">
+          <h1 className="text-3xl font-bold mb-4 text-yellow-400">🎉 Game Over!</h1>
+          <p className="text-gray-300 text-lg mb-2">Your Final Score</p>
+          <div className="text-5xl font-extrabold text-green-400 mb-6">{score} pts</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl transition"
+          >
+            Play Again
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-center items-center p-4">
-      {!isJoined ? (
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-center space-y-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-amber-400">JP-BD Quiz 🇧🇩🇯🇵</h1>
-            <p className="text-sm text-slate-400 mt-1">Enter your name to play</p>
-          </div>
+    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-between p-4 md:p-8">
+      {/* Top Bar: Player Status & Timer */}
+      <div className="w-full max-w-2xl flex justify-between items-center border-b border-slate-800 pb-4">
+        <div>
+          <span className="text-xs text-gray-400 uppercase tracking-wider block">Score</span>
+          <span className="text-xl font-bold text-yellow-400">{score} pts</span>
+        </div>
 
-          <form onSubmit={handleStartGame} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Your Name (e.g. Rakin)"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-center font-medium focus:outline-none focus:border-amber-400"
-              required
-            />
+        <div className="text-center">
+          <span className="text-xs text-gray-400 uppercase tracking-wider block">Time Left</span>
+          <span className={`text-2xl font-black ${timeRemaining <= 5 ? "text-red-500 animate-pulse" : "text-emerald-400"}`}>
+            {timeRemaining}s
+          </span>
+        </div>
+
+        <div className="text-right">
+          <span className="text-xs text-gray-400 uppercase tracking-wider block">Question</span>
+          <span className="text-xl font-bold text-blue-400">
+            {currentQuestionIndex + 1} / {QUIZ_QUESTIONS.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Question Heading */}
+      <div className="w-full max-w-2xl my-6 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2">{currentQuestion.question_en}</h2>
+        <p className="text-lg text-gray-400">{currentQuestion.question_jp}</p>
+      </div>
+
+      {/* Options Grid */}
+      <div className="w-full max-w-2xl grid grid-cols-2 gap-4 my-auto">
+        {currentQuestion.options.map((option) => {
+          const isSelected = selectedOption === option.id;
+          const isCorrect = option.id === currentQuestion.correctOptionId;
+
+          let btnStyle = "border-slate-800 bg-slate-900 hover:border-slate-700";
+          if (selectedOption !== null) {
+            if (isCorrect) {
+              btnStyle = "border-green-500 bg-green-950/40 text-green-300";
+            } else if (isSelected && !isCorrect) {
+              btnStyle = "border-red-500 bg-red-950/40 text-red-300";
+            }
+          }
+
+          return (
             <button
-              type="submit"
-              className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition active:scale-95"
+              key={option.id}
+              onClick={() => handleOptionSelect(option.id)}
+              disabled={selectedOption !== null}
+              className={`flex flex-col items-center p-3 rounded-2xl border-2 transition-all duration-200 text-left overflow-hidden ${btnStyle}`}
             >
-              Start Quiz 🚀
+              <div className="w-full h-32 md:h-40 rounded-xl overflow-hidden bg-slate-800 mb-3">
+                <img
+                  src={option.image}
+                  alt={option.text}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="font-semibold text-sm md:text-base text-gray-200">
+                Option {option.id}: {option.text}
+              </span>
             </button>
-          </form>
-        </div>
-      ) : isFinished ? (
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
-          <div className="text-5xl">🎉</div>
-          <h1 className="text-2xl font-bold text-emerald-400">Quiz Completed!</h1>
-          <p className="text-slate-300 text-sm">
-            Great job, <span className="text-amber-400 font-bold">{playerName}</span>!
-          </p>
-          <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
-            <p className="text-xs text-slate-400">Total Score</p>
-            <p className="text-3xl font-black text-amber-400">{totalScore} pts</p>
-          </div>
-          <p className="text-xs text-slate-500">Check the Presenter Dashboard on laptop for rankings.</p>
-        </div>
-      ) : (
-        <div className="w-full max-w-md flex flex-col justify-between min-h-[90vh]">
-          {/* Header */}
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-            <div>
-              <p className="text-xs text-slate-400">Player</p>
-              <p className="font-bold text-amber-400">{playerName}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400">Question</p>
-              <p className="font-bold text-amber-400">0{currentIndex + 1} / 07</p>
-            </div>
-          </div>
-
-          {/* Question Text */}
-          <div className="my-4 text-center space-y-1">
-            <h2 className="text-xl font-extrabold text-white">{currentQuestion.question_en}</h2>
-            <p className="text-amber-300 text-sm font-medium">{currentQuestion.question_jp}</p>
-          </div>
-
-          {/* 2x2 Image Options Grid */}
-          <div className="grid grid-cols-2 gap-3 my-auto">
-            {currentQuestion.options.map((option) => {
-              const isSelected = selectedOption === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => handleOptionSelect(option.id)}
-                  disabled={selectedOption !== null}
-                  className={`group relative overflow-hidden rounded-2xl border-2 transition flex flex-col items-center text-center p-2 ${
-                    isSelected
-                      ? option.id === currentQuestion.correctOptionId
-                        ? "border-emerald-400 bg-emerald-500/20 scale-95"
-                        : "border-rose-500 bg-rose-500/20 scale-95"
-                      : selectedOption !== null
-                      ? "border-slate-800 bg-slate-900 opacity-40"
-                      : "border-slate-800 bg-slate-900 active:scale-95 hover:border-amber-400"
-                  }`}
-                >
-                  <div className="w-full h-28 rounded-xl overflow-hidden mb-2 bg-slate-950">
-                    <img
-                      src={option.image}
-                      alt={option.text}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-                  <span className="text-xs text-amber-400 font-bold mb-0.5">Option {option.id}</span>
-                  <span className="text-sm font-bold text-slate-100">{option.text}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer Status */}
-          <div className="text-center pt-2">
-            {selectedOption ? (
-              <p className="text-xs text-emerald-400 font-semibold animate-pulse">
-                ✓ Answer Recorded!
-              </p>
-            ) : (
-              <p className="text-xs text-slate-500">Tap an image option to select</p>
-            )}
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
     </main>
   );
 }

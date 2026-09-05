@@ -44,7 +44,7 @@ export const QUIZ_QUESTIONS: Question[] = [
     options: [
       { id: "A", text: "Mount Fuji", image: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?w=400&q=80" },
       { id: "B", text: "Everest", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400&q=80" },
-      { id: "C", text: "K2", image: "https://images.unsplash.com/photo-1508873696983-2df515122519?w=400&q=80" },
+      { id: "C", text: "Olympus Mons", image: "https://cdn.mos.cms.futurecdn.net/v2/t:0,l:224,cw:576,ch:576,q:80,w:576/FgDxtn3qXx4vf8AHj2NYGm.jpg" },
       { id: "D", text: "Kilimanjaro", image: "https://images.unsplash.com/photo-1650668302197-7f556c34cb91?w=400&q=80" }
     ],
     correctOptionId: "A"
@@ -66,10 +66,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "What is the capital city of Bangladesh?",
     question_jp: "バングラデシュの首都はどこですか？",
     options: [
-      { id: "A", text: "Chittagong", image: "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?w=400&q=80" },
-      { id: "B", text: "Sylhet", image: "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?w=400&q=80" },
-      { id: "C", text: "Dhaka", image: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=400&q=80" },
-      { id: "D", text: "Rajshahi", image: "https://images.unsplash.com/photo-1623053000738-3105ba3702c2?w=400&q=80" }
+      { id: "A", text: "Chittagong", image: "https://www.deraresort.com/images/tourist-place-in-cox-bazar.jpg" },
+      { id: "B", text: "Sylhet", image: "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/70/25/28/pangthumai-waterfall.jpg?w=500&h=400&s=1" },
+      { id: "C", text: "Dhaka", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRWWuarSf_D8GfOYN73WSlh0AoCZ7y9XnQINJ7dV5jUtQRCqBpBxvJGc0SC&s=10" },
+      { id: "D", text: "Rajshahi", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFRYWHvAdDtDWTLghRzAi4e5UVL28vpjBSGgYXZLjK3Kj8otQh5T9C438&s=10" }
     ],
     correctOptionId: "C"
   },
@@ -78,10 +78,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "BJET is mainly for...",
     question_jp: "BJETは主に誰のためのプログラムですか？",
     options: [
-      { id: "A", text: "Pilot ✈️", image: "https://images.unsplash.com/photo-1508672019048-805479767513?w=400&q=80" },
-      { id: "B", text: "Doctor 🩺", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80" },
-      { id: "C", text: "IT Engineer 💻", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=80" },
-      { id: "D", text: "Farmer 🌾", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&q=80" }
+      { id: "A", text: "Pilot ✈️", image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDQebbaltAsJAPGLCuJ5LHAIcF4haAm3ucBIkCzns7RM6hUV6-d1JEmPQ&s=10" },
+      { id: "B", text: "Doctor 🩺", image: "https://hips.hearstapps.com/hmg-prod/images/portrait-of-a-happy-young-doctor-in-his-clinic-royalty-free-image-1661432441.jpg?crop=0.66698xw:1xh;center,top&resize=1200:*" },
+      { id: "C", text: "IT Engineer 💻", image: "https://www.gisma.com/uploads/sites/5/2024/12/pexels-thisisengineering-3861958-scaled.jpg?w=1024" },
+      { id: "D", text: "Farmer 🌾", image: "https://images.stockcake.com/public/f/b/b/fbb1eb1e-5fdb-4bd8-b109-33e48c06add3_large/farmer-working-field-stockcake.jpg" }
     ],
     correctOptionId: "C"
   },
