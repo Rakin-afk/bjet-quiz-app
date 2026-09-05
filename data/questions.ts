@@ -1,6 +1,6 @@
 export interface Option {
   id: string;
-  text: string;
+  text?: string; // Optional করা হলো যাতে নাম না দিলেও Vercel Build Success হয়
   image: string;
 }
 
