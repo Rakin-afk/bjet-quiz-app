@@ -10,10 +10,17 @@ interface Player {
 
 export default function HostDashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
-  const hostUrl = "http://192.168.0.41:3000/play";
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(hostUrl)}`;
+  
+  // ১. এখানে 'http://192.168.0.41:3000/play' সরিয়ে তোমার Vercel এর আসল লিংক বসাও
+  // উদাহরণ: https://bjet-quiz-app.vercel.app/play
+  const [playUrl, setPlayUrl] = useState("");
 
   useEffect(() => {
+    // এটি স্বয়ংক্রিয়ভাবে Vercel এর ডোমেইন ধরে নেবে
+    if (typeof window !== "undefined") {
+      setPlayUrl(`${window.location.origin}/play`);
+    }
+
     const fetchLeaderboard = async () => {
       try {
         const res = await fetch("/api/quiz");
@@ -31,6 +38,10 @@ export default function HostDashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  const qrImageUrl = playUrl 
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(playUrl)}`
+    : "";
+
   return (
     <main className="min-h-screen bg-slate-950 text-white p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -47,11 +58,15 @@ export default function HostDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl flex flex-col items-center justify-center text-center">
-            <div className="bg-white p-3 rounded-2xl border-4 border-amber-400 mb-4">
-              <img src={qrImageUrl} alt="QR Code" width={180} height={180} className="rounded-lg" />
+            <div className="bg-white p-3 rounded-2xl border-4 border-amber-400 mb-4 min-h-[200px] flex items-center justify-center">
+              {qrImageUrl ? (
+                <img src={qrImageUrl} alt="QR Code" width={180} height={180} className="rounded-lg" />
+              ) : (
+                <p className="text-xs text-slate-500">Generating QR...</p>
+              )}
             </div>
-            <p className="text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-              {hostUrl}
+            <p className="text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 break-all max-w-full">
+              {playUrl || "Loading URL..."}
             </p>
           </div>
 
