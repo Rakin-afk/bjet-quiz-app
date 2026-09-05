@@ -1,75 +1,76 @@
 "use client";
 
 import React, { useState } from "react";
-
-const QUESTIONS = [
-  {
-    id: 1,
-    question_en: "What is the capital of Japan?",
-    question_jp: "日本の首都は何ですか？",
-    options: [
-      { id: "A", text: "Osaka" },
-      { id: "B", text: "Tokyo" },
-      { id: "C", text: "Kyoto" },
-      { id: "D", text: "Nagoya" },
-    ],
-    correctOptionId: "B",
-  },
-];
+import { QUIZ_QUESTIONS } from "@/data/questions";
 
 export default function PlayPage() {
   const [playerName, setPlayerName] = useState("");
   const [isJoined, setIsJoined] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<number>(0);
+  const [totalScore, setTotalScore] = useState(0);
+  const [quizStartTime, setQuizStartTime] = useState<number>(0);
+  const [questionStartTime, setQuestionStartTime] = useState<number>(0);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const currentQuestion = QUESTIONS[0];
+  // ৭টি প্রশ্নের সেট
+  const questionsList = QUIZ_QUESTIONS.slice(0, 7);
+  const currentQuestion = questionsList[currentIndex];
 
   const handleStartGame = (e: React.FormEvent) => {
-    e.preventDefault(); // মোবাইল কিবোর্ডের অটো-রিলোড ব্লক করবে
+    e.preventDefault();
     const trimmed = playerName.trim();
     if (!trimmed) return;
 
-    // ১. সাথে সাথে গেম স্ক্রিনে রিডাইরেক্ট
+    const now = Date.now();
     setIsJoined(true);
-    setStartTime(Date.now());
-
-    // ২. ব্যাকগ্রাউন্ডে জয়েন রিকোয়েস্ট পাঠানো
-    fetch("/api/quiz", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "join", name: trimmed }),
-    }).catch((e) => console.error("Join API Failed:", e));
+    setQuizStartTime(now);
+    setQuestionStartTime(now);
   };
 
   const handleOptionSelect = (optionId: string) => {
     if (selectedOption) return;
 
     setSelectedOption(optionId);
-    const timeTaken = Number(((Date.now() - startTime) / 1000).toFixed(2));
+    const now = Date.now();
+    const qTimeTaken = (now - questionStartTime) / 1000;
     const isCorrect = optionId === currentQuestion.correctOptionId;
-    const points = isCorrect ? Math.max(100 - Math.floor(timeTaken * 2), 10) : 0;
+    const points = isCorrect ? Math.max(100 - Math.floor(qTimeTaken * 2), 10) : 0;
 
-    fetch("/api/quiz", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "submit",
-        name: playerName.trim(),
-        score: points,
-        timeTaken: timeTaken,
-      }),
-    }).catch((e) => console.error("Submit API Failed:", e));
+    const updatedScore = totalScore + points;
+    setTotalScore(updatedScore);
+
+    setTimeout(() => {
+      if (currentIndex + 1 < questionsList.length) {
+        setCurrentIndex((prev) => prev + 1);
+        setSelectedOption(null);
+        setQuestionStartTime(Date.now());
+      } else {
+        // ৭টি প্রশ্ন শেষ হলে ব্যাকএন্ডে ড্যাশবোর্ডের জন্য ফাইনাল ডাটা পাঠানো হবে
+        const totalDuration = Number(((Date.now() - quizStartTime) / 1000).toFixed(2));
+        setIsFinished(true);
+
+        fetch("/api/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit",
+            name: playerName.trim(),
+            score: updatedScore,
+            timeTaken: totalDuration,
+          }),
+        }).catch((e) => console.error("Submit API Error:", e));
+      }
+    }, 1200);
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-center items-center p-4">
       {!isJoined ? (
-        /* Step 1: Name Entry View with Form PreventDefault */
         <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-center space-y-6">
           <div>
-            <h1 className="text-3xl font-extrabold text-amber-400">JP-BD Quiz</h1>
-            <p className="text-sm text-slate-400 mt-1">Enter your name to play</p>
+            <h1 className="text-3xl font-extrabold text-amber-400">JP-BD Quiz 🇧🇩🇯🇵</h1>
+            <p className="text-sm text-slate-400 mt-1">Enter your name to start 7-question round</p>
           </div>
 
           <form onSubmit={handleStartGame} className="space-y-4">
@@ -81,7 +82,6 @@ export default function PlayPage() {
               className="w-full px-4 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-center font-medium focus:outline-none focus:border-amber-400"
               required
             />
-
             <button
               type="submit"
               className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition active:scale-95"
@@ -90,9 +90,21 @@ export default function PlayPage() {
             </button>
           </form>
         </div>
+      ) : isFinished ? (
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
+          <div className="text-5xl">🎉</div>
+          <h1 className="text-2xl font-bold text-emerald-400">Quiz Completed!</h1>
+          <p className="text-slate-300 text-sm">
+            Awesome job, <span className="text-amber-400 font-bold">{playerName}</span>!
+          </p>
+          <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-1">
+            <p className="text-xs text-slate-400">Total Score</p>
+            <p className="text-3xl font-black text-amber-400">{totalScore} pts</p>
+          </div>
+          <p className="text-xs text-slate-500">Check the Presenter Dashboard on laptop for rankings.</p>
+        </div>
       ) : (
-        /* Step 2: Live MCQ Screen */
-        <div className="w-full max-w-md flex flex-col justify-between min-h-[80vh]">
+        <div className="w-full max-w-md flex flex-col justify-between min-h-[85vh]">
           <div className="flex justify-between items-center border-b border-slate-800 pb-3">
             <div>
               <p className="text-xs text-slate-400">Player</p>
@@ -100,16 +112,24 @@ export default function PlayPage() {
             </div>
             <div className="text-right">
               <p className="text-xs text-slate-400">Question</p>
-              <p className="font-bold">01 / 01</p>
+              <p className="font-bold text-amber-400">0{currentIndex + 1} / 07</p>
             </div>
           </div>
 
-          <div className="my-6 text-center space-y-2">
-            <h2 className="text-xl font-bold text-white">{currentQuestion.question_en}</h2>
-            <p className="text-amber-300 font-medium">{currentQuestion.question_jp}</p>
+          <div className="my-4 text-center space-y-3">
+            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-lg">
+              <img
+                src={currentQuestion.image}
+                alt="Question Visual"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <h2 className="text-lg font-bold text-white">{currentQuestion.question_en}</h2>
+            <p className="text-amber-300 text-sm font-medium">{currentQuestion.question_jp}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 my-auto">
+          <div className="grid grid-cols-1 gap-2.5 my-auto">
             {currentQuestion.options.map((option) => {
               const isSelected = selectedOption === option.id;
               return (
@@ -118,28 +138,30 @@ export default function PlayPage() {
                   type="button"
                   onClick={() => handleOptionSelect(option.id)}
                   disabled={selectedOption !== null}
-                  className={`p-5 rounded-2xl border flex flex-col items-center justify-center font-bold text-base transition ${
+                  className={`p-4 rounded-xl border flex items-center justify-between font-bold text-sm transition ${
                     isSelected
-                      ? "bg-amber-400 text-slate-950 border-amber-400 shadow-lg scale-95"
+                      ? option.id === currentQuestion.correctOptionId
+                        ? "bg-emerald-500 text-slate-950 border-emerald-400 scale-95"
+                        : "bg-rose-500 text-white border-rose-400 scale-95"
                       : selectedOption !== null
                       ? "bg-slate-900 border-slate-800 text-slate-600 opacity-40"
                       : "bg-slate-900 border-slate-800 text-slate-200 active:bg-slate-800"
                   }`}
                 >
-                  <span className="text-xs text-slate-400 mb-1">Option {option.id}</span>
+                  <span className="text-xs opacity-70">Option {option.id}</span>
                   <span>{option.text}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="text-center pt-4">
+          <div className="text-center pt-2">
             {selectedOption ? (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 py-3 rounded-xl font-semibold text-sm animate-pulse">
-                ✓ Answer Submitted! Check Laptop Dashboard.
-              </div>
+              <p className="text-xs text-emerald-400 font-semibold animate-pulse">
+                ✓ Recorded! Moving to next question...
+              </p>
             ) : (
-              <p className="text-xs text-slate-500">Tap an option to submit</p>
+              <p className="text-xs text-slate-500">Tap an option to select</p>
             )}
           </div>
         </div>
