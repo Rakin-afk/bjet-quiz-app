@@ -13,18 +13,16 @@ export default function PlayPage() {
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
-  // নিখুঁত সময় ট্র্যাকিংয়ের জন্য Refs
   const startTimeRef = useRef<number>(0);
   const currentScoreRef = useRef<number>(0);
 
   const currentQuestion: Question = QUIZ_QUESTIONS[currentQuestionIndex];
 
-  // টাইমার কাউন্টডাউন (প্রতি প্রশ্নের জন্য ১৫ সেকেন্ড)
   useEffect(() => {
     if (!hasEnteredName || isGameOver) return;
 
     if (timeRemaining === 0) {
-      handleOptionSelect(""); // সময় শেষ হলে খালি উত্তর হিসেবে সাবমিট হবে
+      handleOptionSelect("");
       return;
     }
 
@@ -35,23 +33,20 @@ export default function PlayPage() {
     return () => clearInterval(timer);
   }, [timeRemaining, isGameOver, hasEnteredName]);
 
-  // নাম সাবমিট ও গেম টাইম স্টার্ট
   const handleStartGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (playerName.trim() !== "") {
       setHasEnteredName(true);
-      startTimeRef.current = Date.now(); // এক্সেক্ট স্টার্ট টাইম রেকর্ড করা হলো
+      startTimeRef.current = Date.now();
     }
   };
 
-  // উত্তর সিলেক্ট এবং নিখুঁত পয়েন্ট হিসেব
   const handleOptionSelect = (optionId: string) => {
     if (selectedOption !== null && optionId !== "") return;
     setSelectedOption(optionId);
 
     let updatedScore = currentScoreRef.current;
 
-    // সঠিক উত্তর হলে পয়েন্ট যোগ হবে
     if (optionId === currentQuestion.correctOptionId) {
       const pointsGained = 100 + timeRemaining * 10;
       updatedScore += pointsGained;
@@ -64,7 +59,6 @@ export default function PlayPage() {
     }, 1000);
   };
 
-  // পরবর্তী প্রশ্ন বা গেম ওভার এবং API-তে ১০০% এক্সেক্ট ডাটা সেন্ড
   const handleNextQuestion = async (finalScore: number) => {
     setSelectedOption(null);
 
@@ -74,18 +68,16 @@ export default function PlayPage() {
     } else {
       setIsGameOver(true);
 
-      // ১. এক্সেক্ট মোট কত সেকেন্ড সময় লেগেছে তা বের করা
       const totalSeconds = Math.round((Date.now() - startTimeRef.current) / 1000);
 
-      // ২. ফোনে দেখা পাওয়া ফাইনাল নম্বর ও নিখুঁত সময় API-তে পাঠানো
       try {
         await fetch("/api/leaderboard", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             player: playerName,
-            score: finalScore, // ফোনের এক্সেক্ট স্কোর
-            timeTaken: `${totalSeconds}s`, // আসল সময়
+            score: finalScore,
+            timeTaken: `${totalSeconds}s`,
           }),
         });
       } catch (err) {
@@ -94,7 +86,6 @@ export default function PlayPage() {
     }
   };
 
-  // ১. নাম ইনপুট স্ক্রিন
   if (!hasEnteredName) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
@@ -123,7 +114,6 @@ export default function PlayPage() {
     );
   }
 
-  // ২. গেম ওভার স্ক্রিন
   if (isGameOver) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
@@ -143,7 +133,6 @@ export default function PlayPage() {
     );
   }
 
-  // ৩. মূল গেম স্ক্রিন
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-between p-4 md:p-8">
       <div className="w-full max-w-2xl flex justify-between items-center border-b border-slate-800 pb-4">
@@ -194,12 +183,12 @@ export default function PlayPage() {
               <div className="w-full h-32 md:h-40 rounded-xl overflow-hidden bg-slate-800 mb-3">
                 <img
                   src={option.image}
-                  alt={option.text}
+                  alt={option.text || `Option ${option.id}`}
                   className="w-full h-full object-cover"
                 />
               </div>
               <span className="font-semibold text-sm md:text-base text-gray-200">
-                Option {option.id}: {option.text}
+                Option {option.id}{option.text ? `: ${option.text}` : ""}
               </span>
             </button>
           );
