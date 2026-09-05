@@ -1,44 +1,65 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-interface Player {
-  name: string;
-  score: number;
-  timeTaken: number;
+// global variable declaration for Vercel hot memory retention
+const globalForQuiz = global as unknown as {
+  quizPlayers: Array<{ name: string; score: number; timeTaken: number }>;
+};
+
+if (!globalForQuiz.quizPlayers) {
+  globalForQuiz.quizPlayers = [];
 }
-
-let playersStore: { [key: string]: Player } = {};
 
 export async function GET() {
-  const sortedPlayers = Object.values(playersStore).sort(
-    (a, b) => b.score - a.score || a.timeTaken - b.timeTaken
+  // শর্টিং করে পয়েন্ট বেশি এবং সময় কম অনুযায়ী ড্যাশবোর্ডে প্লেয়ার সাজানো হবে
+  const sorted = [...globalForQuiz.quizPlayers].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.timeTaken - b.timeTaken;
+  });
+
+  return NextResponse.json(
+    { players: sorted },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      },
+    }
   );
-  return NextResponse.json({ players: sortedPlayers });
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
+    const body = await req.json();
     const { action, name, score, timeTaken } = body;
 
-    if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
-
-    const cleanName = name.trim();
-
-    if (action === "join") {
-      if (!playersStore[cleanName]) {
-        playersStore[cleanName] = { name: cleanName, score: 0, timeTaken: 0 };
-      }
-    } else if (action === "submit") {
-      if (playersStore[cleanName]) {
-        playersStore[cleanName].score += score || 0;
-        playersStore[cleanName].timeTaken += timeTaken || 0;
-      }
-    } else if (action === "reset") {
-      playersStore = {};
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, players: Object.values(playersStore) });
-  } catch (err) {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 500 });
+    if (action === "submit") {
+      const existingIndex = globalForQuiz.quizPlayers.findIndex(
+        (p) => p.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (existingIndex > -1) {
+        globalForQuiz.quizPlayers[existingIndex] = {
+          name,
+          score,
+          timeTaken,
+        };
+      } else {
+        globalForQuiz.quizPlayers.push({ name, score, timeTaken });
+      }
+    }
+
+    return NextResponse.json(
+      { success: true, players: globalForQuiz.quizPlayers },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
+  } catch (error) {
+    return NextResponse.json({ error: "Invalid Request" }, { status: 500 });
   }
 }
