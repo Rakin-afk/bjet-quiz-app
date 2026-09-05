@@ -66,10 +66,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "What is the capital city of Bangladesh?",
     question_jp: "バングラデシュの首都はどこですか？",
     options: [
-      { id: "A", text: "Chittagong", image: "https://images.unsplash.com/photo-1588068222001-1e24747a111a?w=400&q=80" },
-      { id: "B", text: "Sylhet", image: "https://images.unsplash.com/photo-1622308644420-b20142dc993c?w=400&q=80" },
+      { id: "A", text: "Chittagong", image: "https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?w=400&q=80" },
+      { id: "B", text: "Sylhet", image: "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5?w=400&q=80" },
       { id: "C", text: "Dhaka", image: "https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=400&q=80" },
-      { id: "D", text: "Rajshahi", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400&q=80" }
+      { id: "D", text: "Rajshahi", image: "https://images.unsplash.com/photo-1623053000738-3105ba3702c2?w=400&q=80" }
     ],
     correctOptionId: "C"
   },
@@ -78,10 +78,10 @@ export const QUIZ_QUESTIONS: Question[] = [
     question_en: "BJET is mainly for...",
     question_jp: "BJETは主に誰のためのプログラムですか？",
     options: [
-      { id: "A", text: "Pilot ✈️", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80" },
-      { id: "B", text: "Doctor 🩺", image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&q=80" },
-      { id: "C", text: "IT Engineer 💻", image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=400&q=80" },
-      { id: "D", text: "Farmer 🌾", image: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?w=400&q=80" }
+      { id: "A", text: "Pilot ✈️", image: "https://images.unsplash.com/photo-1508672019048-805479767513?w=400&q=80" },
+      { id: "B", text: "Doctor 🩺", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80" },
+      { id: "C", text: "IT Engineer 💻", image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=80" },
+      { id: "D", text: "Farmer 🌾", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&q=80" }
     ],
     correctOptionId: "C"
   },
