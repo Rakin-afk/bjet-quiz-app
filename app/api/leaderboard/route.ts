@@ -7,15 +7,29 @@ export interface PlayerScore {
   wrongAnswers?: number;
 }
 
-// Global Memory Store for live game session
-let leaderboardData: PlayerScore[] = [];
-
-// GET method: Leaderboard data fetch করার জন্য
-export async function GET() {
-  return NextResponse.json(leaderboardData);
+// 🛡️ Vercel Node.js Process Restart Protection
+// globalThis ব্যবহার করায় Server Function re-execute হলেও আগের ডাটা মুছে যাবে না।
+declare global {
+  var __leaderboardStore: PlayerScore[] | undefined;
 }
 
-// POST method: Player score and wrong answer count update করার জন্য
+if (!globalThis.__leaderboardStore) {
+  globalThis.__leaderboardStore = [];
+}
+
+const leaderboardData = globalThis.__leaderboardStore;
+
+// GET: Leaderboard Data Fetch
+export async function GET() {
+  return NextResponse.json(leaderboardData, {
+    headers: {
+      // 🚀 Cache Disable করা হয়েছে যেন প্রতিটি Request-এ ফ্রেশ লাইভ ডাটা আসে
+      "Cache-Control": "no-store, max-age=0",
+    },
+  });
+}
+
+// POST: Add or Update Player Score
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -25,10 +39,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Player name required" }, { status: 400 });
     }
 
-    const existingIndex = leaderboardData.findIndex((p) => p.player === player);
+    const existingIndex = leaderboardData.findIndex(
+      (p) => p.player.trim().toLowerCase() === player.trim().toLowerCase()
+    );
 
     if (existingIndex !== -1) {
-      // যদি প্লেয়ার আগে থেকেই তালিকায় থাকে, তবে তার স্কোর এবং ভুল উত্তরের সংখ্যা আপডেট হবে
+      // আগের প্লেয়ার থাকলে তথ্য আপডেট
       leaderboardData[existingIndex] = {
         player,
         score: score ?? leaderboardData[existingIndex].score,
@@ -36,7 +52,7 @@ export async function POST(request: Request) {
         wrongAnswers: wrongAnswers ?? leaderboardData[existingIndex].wrongAnswers ?? 0,
       };
     } else {
-      // নতুন প্লেয়ার হলে এনট্রি যোগ হবে
+      // নতুন প্লেয়ার হলে যুক্ত হবে
       leaderboardData.push({
         player,
         score: score || 0,
@@ -51,8 +67,8 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE method: গেম রিসেট বা ক্লিয়ার করার প্রয়োজন পড়লে
+// DELETE: আপনি চাইলে প্রেজেন্টেশনের আগে ম্যানুয়ালি রিসেট দেওয়ার জন্য এটি ব্যবহার করতে পারেন
 export async function DELETE() {
-  leaderboardData = [];
+  globalThis.__leaderboardStore = [];
   return NextResponse.json({ success: true, message: "Leaderboard reset successfully" });
 }
