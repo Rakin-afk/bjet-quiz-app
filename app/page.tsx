@@ -6,7 +6,7 @@ interface LeaderboardEntry {
   player: string;
   score: number;
   timeTaken?: string;
-  wrongAnswers?: number; // ভুল উত্তরের সংখ্যা ট্র্যাক করার জন্য
+  wrongAnswers?: number;
 }
 
 export default function PresenterDashboard() {
@@ -17,8 +17,31 @@ export default function PresenterDashboard() {
       try {
         const res = await fetch("/api/leaderboard");
         const data = await res.json();
-        // স্কোর অনুযায়ী ডিসেন্ডিং সর্ট (বড় থেকে ছোট)
-        const sorted = (data || []).sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score);
+        
+        // 🎯 PROPER SORTING LOGIC:
+        // 1. Highest Score first
+        // 2. Lowest Time Taken second (If scores are equal)
+        // 3. Lowest Wrong Answers third (If score and time are equal)
+        const sorted = (data || []).sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+          // ১. পয়েন্ট বেশি থাকলে সে আগে
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+
+          // ২. পয়েন্ট সমান হলে কম সময় নেওয়া ব্যক্তি আগে ("20s" -> 20)
+          const timeA = parseInt(a.timeTaken?.replace("s", "") || "9999", 10);
+          const timeB = parseInt(b.timeTaken?.replace("s", "") || "9999", 10);
+          
+          if (timeA !== timeB) {
+            return timeA - timeB;
+          }
+
+          // ৩. টাইমও সমান হলে যার ভুল কম সে আগে
+          const wrongA = a.wrongAnswers || 0;
+          const wrongB = b.wrongAnswers || 0;
+          return wrongA - wrongB;
+        });
+
         setLeaderboard(sorted);
       } catch (err) {
         console.error("Failed to fetch leaderboard:", err);
