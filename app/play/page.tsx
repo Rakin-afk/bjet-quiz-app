@@ -9,12 +9,14 @@ export default function PlayPage() {
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
+  const [wrongAnswers, setWrongAnswers] = useState<number>(0); // UI-তে দেখানোর জন্য state
   const [timeRemaining, setTimeRemaining] = useState<number>(15);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
   const startTimeRef = useRef<number>(0);
   const currentScoreRef = useRef<number>(0);
+  const wrongCountRef = useRef<number>(0); // API-তে পাঠানোর জন্য ref tracking
 
   const currentQuestion: Question = QUIZ_QUESTIONS[currentQuestionIndex];
 
@@ -22,7 +24,7 @@ export default function PlayPage() {
     if (!hasEnteredName || isGameOver) return;
 
     if (timeRemaining === 0) {
-      handleOptionSelect("");
+      handleOptionSelect(""); // সময় শেষ হয়ে গেলে খালি অপশন পাঠিয়ে টাইমআউট হ্যান্ডেল করা
       return;
     }
 
@@ -47,11 +49,16 @@ export default function PlayPage() {
 
     let updatedScore = currentScoreRef.current;
 
+    // সঠিক উত্তর হলে স্কোর বাড়বে
     if (optionId === currentQuestion.correctOptionId) {
       const pointsGained = 100 + timeRemaining * 10;
       updatedScore += pointsGained;
       currentScoreRef.current = updatedScore;
       setScore(updatedScore);
+    } else {
+      // ভুল উত্তর দিলে বা টাইমআউট হলে Wrong Count বাড়বে
+      wrongCountRef.current += 1;
+      setWrongAnswers(wrongCountRef.current);
     }
 
     setTimeout(() => {
@@ -78,6 +85,7 @@ export default function PlayPage() {
             player: playerName,
             score: finalScore,
             timeTaken: `${totalSeconds}s`,
+            wrongAnswers: wrongCountRef.current, // 👉 ভুল উত্তরের সংখ্যা পাঠানো হচ্ছে
           }),
         });
       } catch (err) {
@@ -121,7 +129,15 @@ export default function PlayPage() {
           <h1 className="text-3xl font-bold mb-2 text-yellow-400">🎉 Game Over!</h1>
           <p className="text-gray-400 text-lg mb-1">{playerName}</p>
           <p className="text-gray-300 text-sm mb-4">Your Final Score</p>
-          <div className="text-5xl font-extrabold text-green-400 mb-6">{score} pts</div>
+          <div className="text-5xl font-extrabold text-green-400 mb-4">{score} pts</div>
+          
+          {/* Wrong answers highlight inside play view */}
+          {wrongAnswers > 0 && (
+            <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-red-400 font-bold text-sm mb-6 inline-block">
+              ❌ Wrong Answers: {wrongAnswers}
+            </div>
+          )}
+
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl transition"

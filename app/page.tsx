@@ -6,12 +6,12 @@ interface LeaderboardEntry {
   player: string;
   score: number;
   timeTaken?: string;
+  wrongAnswers?: number; // ভুল উত্তরের সংখ্যা ট্র্যাক করার জন্য
 }
 
 export default function PresenterDashboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
-  // API থেকে লিডারবোর্ড ডেটা ফেচ করার লজিক (৫ সেকেন্ড পর পর রিফ্রেশ)
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
@@ -26,7 +26,7 @@ export default function PresenterDashboard() {
     };
 
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 3000);
+    const interval = setInterval(fetchLeaderboard, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,7 +59,6 @@ export default function PresenterDashboard() {
         {/* Left: QR Code Box */}
         <div className="lg:col-span-4 bg-[#0d1322] border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl">
           <div className="bg-white p-4 rounded-2xl mb-6 shadow-inner">
-            {/* তোমার QR Code ইমেজ / SVG */}
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://bjet-quiz-app.vercel.app/play`}
               alt="Scan to play"
@@ -133,22 +132,32 @@ export default function PresenterDashboard() {
                       </div>
                     </div>
 
-                    {/* Right: Score & Time */}
-                    <div className="text-right">
-                      <div
-                        className={`font-black ${
-                          isWinner
-                            ? "text-3xl text-amber-400 drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]"
-                            : "text-xl text-green-400"
-                        }`}
-                      >
-                        {item.score} <span className="text-sm font-semibold text-gray-400">pts</span>
-                      </div>
-                      {item.timeTaken && (
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          ⏱ {item.timeTaken}
+                    {/* Right: Wrong Answer Count, Score & Time */}
+                    <div className="flex items-center gap-4 text-right">
+                      {/* Red Wrong Counter Tag */}
+                      {typeof item.wrongAnswers === "number" && item.wrongAnswers > 0 && (
+                        <div className="bg-red-500/15 border border-red-500/40 text-red-400 px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1">
+                          <span>❌</span>
+                          <span>{item.wrongAnswers} Wrong</span>
                         </div>
                       )}
+
+                      <div>
+                        <div
+                          className={`font-black ${
+                            isWinner
+                              ? "text-3xl text-amber-400 drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]"
+                              : "text-xl text-green-400"
+                          }`}
+                        >
+                          {item.score} <span className="text-sm font-semibold text-gray-400">pts</span>
+                        </div>
+                        {item.timeTaken && (
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            ⏱ {item.timeTaken}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
