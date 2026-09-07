@@ -70,5 +70,5 @@ export async function POST(request: Request) {
 // DELETE: আপনি চাইলে প্রেজেন্টেশনের আগে ম্যানুয়ালি রিসেট দেওয়ার জন্য এটি ব্যবহার করতে পারেন
 export async function DELETE() {
   globalThis.__leaderboardStore = [];
-  return NextResponse.json({ success: true, message: "Leaderboard reset successfully" });
+  return NextResponse.json({ success: true, message: "Leaderboard Reset Successfully" });
 }
