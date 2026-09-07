@@ -1,102 +1,162 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { QRCodeSVG } from "qrcode.react";
 
 interface LeaderboardEntry {
   player: string;
   score: number;
-  timeTaken: string;
+  timeTaken?: string;
 }
 
-export default function Home() {
+export default function PresenterDashboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const playUrl = "https://bjet-quiz-app.vercel.app/play";
 
-  // প্রতি ১ সেকেন্ড পর পর অটো ফেচ হবে
+  // API থেকে লিডারবোর্ড ডেটা ফেচ করার লজিক (৫ সেকেন্ড পর পর রিফ্রেশ)
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
         const res = await fetch("/api/leaderboard");
-        if (res.ok) {
-          const data = await res.json();
-          setLeaderboard(data);
-        }
+        const data = await res.json();
+        // স্কোর অনুযায়ী ডিসেন্ডিং সর্ট (বড় থেকে ছোট)
+        const sorted = (data || []).sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score);
+        setLeaderboard(sorted);
       } catch (err) {
-        console.error("Error fetching leaderboard:", err);
+        console.error("Failed to fetch leaderboard:", err);
       }
     };
 
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 1000);
+    const interval = setInterval(fetchLeaderboard, 3000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-6 md:p-10 flex flex-col justify-between">
+    <main className="min-h-screen bg-[#070b14] text-white p-6 md:p-10 flex flex-col items-center">
       {/* Top Header */}
-      <div className="flex justify-between items-center border-b border-slate-800 pb-6 mb-8">
+      <div className="w-full max-w-7xl flex justify-between items-center mb-8 border-b border-slate-800 pb-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-yellow-400">
+          <h1 className="text-4xl font-extrabold text-amber-400 flex items-center gap-3">
             Live Presenter Dashboard 🎮
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Scan QR Code on mobile to play live</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Scan QR Code on mobile to play live
+          </p>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl px-6 py-3 text-center">
-          <span className="text-xs text-gray-400 block uppercase font-semibold">Connected Players</span>
-          <span className="text-2xl font-bold text-yellow-400">{leaderboard.length}</span>
+
+        <div className="bg-slate-900 border border-slate-800 px-6 py-3 rounded-2xl text-center">
+          <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold block">
+            Connected Players
+          </span>
+          <span className="text-3xl font-black text-amber-400">
+            {leaderboard.length}
+          </span>
         </div>
       </div>
 
       {/* Main Grid Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 my-auto">
+      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
         {/* Left: QR Code Box */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-xl">
+        <div className="lg:col-span-4 bg-[#0d1322] border border-slate-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl">
           <div className="bg-white p-4 rounded-2xl mb-6 shadow-inner">
-            <QRCodeSVG value={playUrl} size={220} />
+            {/* তোমার QR Code ইমেজ / SVG */}
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://bjet-quiz-app.vercel.app/play`}
+              alt="Scan to play"
+              className="w-60 h-60"
+            />
           </div>
-          <div className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 w-full text-xs font-mono text-gray-300 break-all">
-            {playUrl}
+          <div className="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl text-xs font-mono text-amber-300 w-full overflow-hidden text-ellipsis">
+            https://bjet-quiz-app.vercel.app/play
           </div>
         </div>
 
-        {/* Right: Live Leaderboard Box */}
-        <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl flex flex-col">
-          <h2 className="text-xl font-bold mb-6 text-yellow-400 flex items-center gap-2">
+        {/* Right: Live Leaderboard Section */}
+        <div className="lg:col-span-8 bg-[#0d1322] border border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col shadow-2xl">
+          <h2 className="text-2xl font-bold text-amber-400 mb-6 flex items-center gap-2">
             🏆 Live Leaderboard & Timing
           </h2>
 
           {leaderboard.length === 0 ? (
-            <div className="my-auto text-center text-gray-500 py-12">
+            <div className="flex-1 flex items-center justify-center py-20 text-gray-500 font-medium">
               Waiting for players to scan QR and join...
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 text-gray-400 text-xs uppercase">
-                    <th className="pb-3 px-4">Rank</th>
-                    <th className="pb-3 px-4">Player</th>
-                    <th className="pb-3 px-4 text-center">Time</th>
-                    <th className="pb-3 px-4 text-right">Score</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {leaderboard.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-800/50 transition">
-                      <td className="py-4 px-4 font-bold text-yellow-400">#{idx + 1}</td>
-                      <td className="py-4 px-4 font-semibold text-white">{item.player}</td>
-                      <td className="py-4 px-4 text-center text-gray-400 font-mono">{item.timeTaken}</td>
-                      <td className="py-4 px-4 text-right font-bold text-green-400 text-lg">
-                        {item.score} pts
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-3 max-h-[550px] overflow-y-auto pr-2">
+              {leaderboard.map((item, index) => {
+                const isWinner = index === 0;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between rounded-2xl transition-all duration-300 ${
+                      isWinner
+                        ? "bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border-2 border-amber-400 p-5 md:p-6 shadow-[0_0_25px_rgba(251,191,36,0.3)] scale-[1.02]"
+                        : "bg-slate-900/80 border border-slate-800 p-4 text-gray-300 hover:border-slate-700"
+                    }`}
+                  >
+                    {/* Left: Rank & Name */}
+                    <div className="flex items-center gap-4">
+                      {/* Rank Badge */}
+                      <div
+                        className={`font-black flex items-center justify-center rounded-xl ${
+                          isWinner
+                            ? "w-12 h-12 text-2xl bg-amber-400 text-black shadow-lg shadow-amber-400/40"
+                            : index === 1
+                            ? "w-10 h-10 text-lg bg-slate-300 text-black"
+                            : index === 2
+                            ? "w-10 h-10 text-lg bg-amber-700 text-white"
+                            : "w-10 h-10 text-base bg-slate-800 text-gray-400"
+                        }`}
+                      >
+                        {isWinner ? "🥇" : `#${index + 1}`}
+                      </div>
+
+                      {/* Name & Winner Tag */}
+                      <div className="flex flex-col md:flex-row md:items-center gap-2">
+                        <span
+                          className={`font-bold ${
+                            isWinner
+                              ? "text-2xl text-white tracking-wide"
+                              : "text-lg text-gray-200"
+                          }`}
+                        >
+                          {item.player}
+                        </span>
+
+                        {/* WINNER TAG */}
+                        {isWinner && (
+                          <span className="inline-flex items-center gap-1 bg-amber-400 text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider animate-pulse shadow-md shadow-amber-400/30">
+                            👑 Winner
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Score & Time */}
+                    <div className="text-right">
+                      <div
+                        className={`font-black ${
+                          isWinner
+                            ? "text-3xl text-amber-400 drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)]"
+                            : "text-xl text-green-400"
+                        }`}
+                      >
+                        {item.score} <span className="text-sm font-semibold text-gray-400">pts</span>
+                      </div>
+                      {item.timeTaken && (
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          ⏱ {item.timeTaken}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
+
       </div>
     </main>
   );
